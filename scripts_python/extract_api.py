@@ -1,5 +1,6 @@
 # Fase 1: Extracción de datos desde API
 # Este script extrae tendencias de GitHub
+# Este archivo .py es el que va a ir a buscar los datos
 
 """ def main():
     pass
