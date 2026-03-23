@@ -1,10 +1,29 @@
 // Fase 2: Procesamiento de datos con Apache Spark
 // Este es mi archivo de procesamiento donde voy a procesar el archivo bruto
+// Voy a poner logs
 
 import org.apache.spark.sql.SparkSession
+import org.apache.log4j.{Level, Logger, PatternLayout, FileAppender}
+
 
 object ProcessTrends {
+  //Defino el vigilante
+  val logger = Logger.getLogger("Vigilante")
+
+
   def main(args: Array[String]): Unit = {
+
+
+    // Configuro para que ESCRIBA en un archivo real
+    val layout = new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}: %m%n")
+    val appender = new FileAppender(layout, "logs/pipeline_ejecucion.log", true)
+
+    logger.addAppender(appender)
+    logger.setLevel(Level.INFO) // Queremos ver todo desde nivel INFO hacia arriba
+    
+    logger.info("--- INICIANDO PIPELINE DE DATOS ---")
+
+
     println("Iniciando procesamiento de tendencias...")
     // 1. Iniciamos el motor (El Maestro)
     val spark = SparkSession.builder()
@@ -13,18 +32,28 @@ object ProcessTrends {
       .getOrCreate()
 
     // 2. Leemos el CSV que creó Python
-    val df = spark.read
-      .option("header", "true")
-      .option("inferSchema", "true") // Spark adivina si es número o texto cuando lee las primeras líneas. Ten en cuenta que por ello se puede equivocar al inferir.
-      .csv("../data/repos_python.csv") // recuerda indicarle en el path que salga de spark_scala y busque FUERA de ella el .csv, si no, no lo va a encontrar.
+    try {
+      logger.info("Leyendo los deatos del CSV")
+      
+      val df = spark.read
+        .option("header", "true")
+        .option("inferSchema", "true") // Spark adivina si es número o texto cuando lee las primeras líneas. Ten en cuenta que por ello se puede equivocar al inferir.
+        .csv("../data/repos_python.csv") // recuerda indicarle en el path que salga de spark_scala y busque FUERA de ella el .csv, si no, no lo va a encontrar.
+      val totalFilas = df.count()
 
-    // 3. Transformación (Narrow): Filtrar baándome en la columna stars
-    val popularRepos = df.filter("stars > 5000")
+      logger.info(s"Datos cargados:\nTotal filas: $totalFilas")
 
+
+      // 3. Transformación (Narrow): Filtrar baándome en la columna stars
+      val popularRepos = df.filter("stars > 5000")
+    } catch {
+      case e:Exception =>
+        logger.error(s"Error Crítico:No se puedo procesar por: ${e.getMessage}")
     // 4. Acción: Mostrar el resultado
-    popularRepos.show()
-
+    } finally {
+      logger.info("---Cierre del proceso---")
     // 5. Apagar el motor
-    spark.stop()
+      spark.stop()
+    }
   }
 }
