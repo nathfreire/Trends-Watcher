@@ -3,56 +3,96 @@
 // Voy a poner logs
 
 import org.apache.spark.sql.SparkSession
-import org.apache.log4j.{Level, Logger, PatternLayout, FileAppender}
-
+import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.types.IntegerType
+import org.apache.log4j.{Level, Logger, PatternLayout, FileAppender, ConsoleAppender}
 
 object ProcessTrends {
-  //Defino el vigilante
-  val logger = Logger.getLogger("Vigilante")
-
+  // 1. Definimos el Logger global para el objeto
+  val logger: Logger = Logger.getLogger("GitHubTrendsProcessor")
 
   def main(args: Array[String]): Unit = {
 
-
-    // Configuro para que ESCRIBA en un archivo real
+    // --- CONFIGURACIÓN DEL VIGILANTE (LOGS) ---
     val layout = new PatternLayout("%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}: %m%n")
-    val appender = new FileAppender(layout, "logs/pipeline_ejecucion.log", true)
-
-    logger.addAppender(appender)
-    logger.setLevel(Level.INFO) // Queremos ver todo desde nivel INFO hacia arriba
     
-    logger.info("--- INICIANDO PIPELINE DE DATOS ---")
+    // Log en Consola (para verlo ahora)
+    logger.addAppender(new ConsoleAppender(layout))
+    
+    // Log en Archivo (para Auditoría del Módulo 2)
+    try {
+      val fileAppender = new FileAppender(layout, "logs/pipeline_debug.log", true)
+      logger.addAppender(fileAppender)
+    } catch {
+      case e: Exception => println("No se pudo crear el archivo de log: " + e.getMessage)
+    }
 
+    logger.setLevel(Level.INFO)
+    Logger.getLogger("org").setLevel(Level.DEBUG) // Silenciamos el ruido interno de Spark
+    // ------------------------------------------
 
-    println("Iniciando procesamiento de tendencias...")
-    // 1. Iniciamos el motor (El Maestro)
+    logger.info(s"HADOOP_HOME detectado: ${System.getenv("HADOOP_HOME")}")
+    logger.info("Iniciando procesamiento de tendencias...")
+
     val spark = SparkSession.builder()
       .appName("GitHubTrendsProcessor")
-      .master("local[*]") // Esto dice: "Usa todos los núcleos de MI laptop"
+      .master("local[*]")
+      .config("spark.sql.warehouse.dir", new java.io.File("spark-warehouse").getAbsolutePath)
+      .config("hive.exec.scratchdir", new java.io.File("target/hive").getAbsolutePath)
+      .config("spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version", "2")
+      .config("spark.hadoop.mapreduce.fileoutputcommitter.marksuccessfuljobs", "false")
       .getOrCreate()
 
-    // 2. Leemos el CSV que creó Python
     try {
-      logger.info("Leyendo los deatos del CSV")
-      
+      logger.info("Leyendo CSV de entrada...")
       val df = spark.read
         .option("header", "true")
-        .option("inferSchema", "true") // Spark adivina si es número o texto cuando lee las primeras líneas. Ten en cuenta que por ello se puede equivocar al inferir.
-        .csv("../data/repos_python.csv") // recuerda indicarle en el path que salga de spark_scala y busque FUERA de ella el .csv, si no, no lo va a encontrar.
-      val totalFilas = df.count()
+        .option("inferSchema", "true")
+        .csv("../data/repos_python.csv")
 
-      logger.info(s"Datos cargados:\nTotal filas: $totalFilas")
+      val nomCol_clean = Seq("stars")
+      
+      logger.info(s"Aplicando transformación foldLeft sobre columnas: ${nomCol_clean.mkString(", ")}")
+      val df_clean = nomCol_clean.foldLeft(df) { (tempDf, colName) => 
+        tempDf.withColumn(colName, col(colName).cast(IntegerType))
+      }
 
+      logger.info("Iniciando limpieza de valores nulos en columna 'stars'...")
+      val df_final = df_clean.na.drop(Seq("stars"))
 
-      // 3. Transformación (Narrow): Filtrar baándome en la columna stars
-      val popularRepos = df.filter("stars > 5000")
+      val totalRows = df.count()
+      val cleanedRows = df_final.count()
+      
+      logger.info(s"Métricas de calidad: Originales [$totalRows] | Limpias [$cleanedRows]")
+
+      // 6. Intento de Guardado con Trazabilidad Total
+      logger.info("Iniciando fase de guardado en formato Parquet...")
+      
+      try {
+        // Forzamos la ejecución de la acción antes de escribir para asegurar que el plan es válido
+        df_final.coalesce(1)
+          .write
+          .mode("overwrite")
+          .option("compression", "none")
+          .parquet("C:/repos_parquet_test") 
+        
+        logger.info("!!! ÉXITO: El archivo Parquet se ha generado en C:/repos_parquet_test !!!")
+      } catch {
+        case e: Exception => 
+          logger.error(s"### FALLO EN ESCRITURA: La ruta existe pero el archivo no se completó.")
+          logger.error(s"Causa técnica: ${e.getMessage}")
+          // Esto es lo que pide el Módulo 2: volcar el error completo al log
+          logger.debug("Stacktrace completo:", e) 
+      }
+
+      // 7. Mostrar resultados
+      df_final.show(20, false)
+
     } catch {
-      case e:Exception =>
-        logger.error(s"Error Crítico:No se puedo procesar por: ${e.getMessage}")
-    // 4. Acción: Mostrar el resultado
+      case e: Exception => 
+        logger.fatal(s"ERROR CRÍTICO EN EL FLUJO: ${e.getMessage}")
     } finally {
-      logger.info("---Cierre del proceso---")
-    // 5. Apagar el motor
+      logger.info("Apagando motor Spark. Fin del diario de ejecución.")
       spark.stop()
     }
   }
