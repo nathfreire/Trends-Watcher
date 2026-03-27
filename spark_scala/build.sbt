@@ -8,7 +8,8 @@ val sparkVersion = "3.5.0" // La versión más común hoy en día
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql"  % sparkVersion
+  "org.apache.spark" %% "spark-sql"  % sparkVersion,
+  "org.apache.spark" %% "spark-sql" % "provided"
 )
 
 // Tuve que añadir estos dos apartados porque me saltaba un error
