@@ -4,14 +4,18 @@ version := "0.1"
 
 scalaVersion := "2.12.18" // Versión estable compatible con la mayoría de Spark
 
-val sparkVersion = "3.5.0" // La versión más común hoy en día
+val sparkVersion = "3.5.0" // Laa versión más común hoy en dí
+
+
+//Uso %"provided" porque Docker ya tiene una versión de Spark, no es necesario
+//que le diga otra versión porque esa versión se meterá en el .jar cuando lo genere, 
+// además de que pesará más, causará incompatibilidad de versiones.
+// Con esto el .jar usará la versión de Spark que ya vive en Docker
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" %% "spark-core" % sparkVersion,
-  "org.apache.spark" %% "spark-sql"  % sparkVersion,
-  "org.apache.spark" %% "spark-sql" % "provided"
+  "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
+  "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
 )
-
 // Tuve que añadir estos dos apartados porque me saltaba un error
 // 1. Forzar a que el programa corra en un proceso separado
 run / fork := true
