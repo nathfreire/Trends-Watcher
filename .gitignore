@@ -223,4 +223,4 @@ data/*.parquet
 
 # Recomendado: Ignorar cualquier archivo que termine en .log
 *.log
-
+*.txt
