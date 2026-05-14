@@ -214,6 +214,10 @@ __pycache__/
 # Datos (No queremos subir gigas de CSV a GitHub)
 data/*.csv
 data/*.parquet
+*.crc
 
 # VS Code
 .vscode/
+
+# 
+*.txt
