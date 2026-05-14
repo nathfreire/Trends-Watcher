@@ -218,8 +218,9 @@ data/*.parquet
 # VS Code
 .vscode/
 
-# Ignorar todos los archivos Parquet
+# Ignorar todos los Parquet y sus archivos
 *.parquet
+*.crc
 
 # Recomendado: Ignorar cualquier archivo que termine en .log
 *.log
