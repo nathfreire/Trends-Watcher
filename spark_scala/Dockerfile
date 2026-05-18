@@ -15,8 +15,20 @@ ENV SPARK_HOME=/opt/spark
 ENV PATH=$PATH:$SPARK_HOME/bin
 WORKDIR /app
 
-# 4. Copiamos tu JAR
+# 4. Copiamos el JAR
+#Recuerda que el .jar debe estar ya creado, está en la carpeta oculta target
 COPY target/scala-2.12/githubtrends_2.12-0.1.jar /app/app.jar
 
 # 5. Ejecución directa (sin scripts intermedios)
 CMD ["spark-submit", "--class", "ProcessTrends", "/app/app.jar"]
+
+
+#Para CONSTRUIR la imagen:
+# la imagen se va a llamar spark-docker-app
+# (.venv) PS C:\010_\Trends-Watcher\spark_scala> docker build -t spark-docker-app .  
+
+# Si vas a correr el contenedor, y el Dockerfile no está en la raiz sino en una carpeta, muévete
+# a ese carpeta primero, y de ahí ejecutas:
+# (.venv) PS C:\010_\Trends-Watcher> cd C:\010_\Trends-Watcher\spark_scala                                     
+# (.venv) PS C:\010_\Trends-Watcher\spark_scala> docker run --rm `  -v "${PWD}/../data:/app/data" `  -v "${PWD}/../output:/app/output" `  spark-docker-app
+
