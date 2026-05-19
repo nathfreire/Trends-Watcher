@@ -1,0 +1,14 @@
+# 
+mi_db_profile:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: 'mi_db_delta.duckdb' # Archivo local que creará DuckDB
+      extensions:
+        - parquet
+        - httpfs
+        - delta # <--- Clave para que DuckDB pueda leer archivos Delta
+
+
+# C:/010_/Trends-Watcher/output/gold/mi_db_delta.duckdb

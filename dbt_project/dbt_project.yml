@@ -1,0 +1,17 @@
+# dbt_project.yml
+name: 'mi_proyecto_dbt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'mi_db_profile' # Debe coincidir con el nombre en profiles.yml
+
+model-paths: ["models"]
+
+models:
+  mi_proyecto_dbt:
+    # Por defecto, todo en staging serán VISTAS en DuckDB (no duplica datos)
+    staging:
+      +materialized: view
+    # Todo lo que esté en marts se guardará como TABLAS físicas
+    marts:
+      +materialized: table
