@@ -14,8 +14,9 @@ val sparkVersion = "3.5.0" // Laa versión más común hoy en dí
 
 libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-core" % sparkVersion % "provided",
-  "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided"
-)
+  "org.apache.spark" %% "spark-sql"  % sparkVersion % "provided",
+// COMPATIBILIDAD DELTA: Esta es la que debes agregar
+  "io.delta" %% "delta-spark" % "3.1.0")
 // Tuve que añadir estos dos apartados porque me saltaba un error
 // 1. Forzar a que el programa corra en un proceso separado
 run / fork := true
