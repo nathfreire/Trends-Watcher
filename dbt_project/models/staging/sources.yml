@@ -1,0 +1,18 @@
+# Aquí es donde sí va la ruta de tu Delta bruto. 
+#Le dices a dbt: "Oye, usando el motor que configuré en el profile (DuckDB), 
+# ve a buscar datos externos a esta carpeta de Spark".
+#Es decir, estás registrando el "Delta Bruto" como Fuente (Sources)
+#Este archivo no ejecuta código, solo le dice a dbt: 
+# "Oye, en esta ruta del disco hay datos crudos que dejó Spark
+
+# models/delta_bronze/sources.yml
+version: 2
+
+sources:
+  - name: delta_spark
+    meta:
+      plugin: delta
+    description: "Datos crudos de la API de GitHub generados por Spark en formato Delta"
+    tables:
+      - name: trends
+        external_location: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
