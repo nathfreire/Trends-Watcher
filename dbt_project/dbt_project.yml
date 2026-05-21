@@ -1,11 +1,15 @@
 # dbt_project.yml
-name: 'mi_proyecto_dbt'
+name: 'proyecto_dbt'
 version: '1.0.0'
 config-version: 2
 
 profile: 'mi_db_profile' # Debe coincidir con el nombre en profiles.yml
 
-model-paths: ["models"]
+model-paths: ["models"] #model-paths le dice a dbt dónde están tus archivos de código .sql (tus scripts de staging, hechos y dimensiones)
+
+on-run-start:
+  - "INSTALL delta;"
+  - "LOAD delta;"
 
 models:
   mi_proyecto_dbt:
