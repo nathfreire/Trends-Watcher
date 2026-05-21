@@ -12,10 +12,17 @@ on-run-start:
   - "LOAD delta;"
 
 models:
-  mi_proyecto_dbt:
+  proyecto_dbt:
     # Por defecto, todo en staging serán VISTAS en DuckDB (no duplica datos)
     staging:
       +materialized: view
     # Todo lo que esté en marts se guardará como TABLAS físicas
     marts:
-      +materialized: table
+      # Tuve que poner formato tabla/incremental para que dbt gestione los duplicados
+      # porque dbt no es bueno para escribir delta sin un plugin
+      +materialized: incremental
+      +incremental_strategy: merge  # <-- ¡MERGE!
+      +unique_key: 'id_venta'       # La clave primaria para evitar duplicados
+
+vars:
+  ruta_delta_bruto: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
