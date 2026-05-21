@@ -1,14 +1,17 @@
-# 
+# Aquí es dónde se configura el MOTOR, nada más
 mi_db_profile:
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: 'mi_db_delta.duckdb' # Archivo local que creará DuckDB
+      path: 'C:/010_/Trends-Watcher/mi_db_delta.duckdb' # Archivo local que creará DuckDB
       extensions:
         - parquet
         - httpfs
         - delta # <--- Clave para que DuckDB pueda leer archivos Delta
+      settings:
+        custom_extension_repository: null
 
 
-# C:/010_/Trends-Watcher/output/gold/mi_db_delta.duckdb
+# 'C:/010_/Trends-Watcher/mi_db_delta.duckdb' # <--- SOLO EL ARCHIVO DE BASE DE DATOS
+# path: es la ubicación del archivo propio de DuckDB (la base de datos central virtual que dbt va a usar como motor).
