@@ -20,8 +20,8 @@ WORKDIR /app
 COPY target/scala-2.12/githubtrends_2.12-0.1.jar /app/app.jar
 
 # 5. Ejecución directa (sin scripts intermedios)
-CMD ["spark-submit", "--class", "ProcessTrends", "/app/app.jar"]
-
+CMD ["spark-submit", "--class", "ProcessTrends", "--packages", "io.delta:delta-spark_2.12:3.1.0", "/app/app.jar"]
+# se ha agregado el parámetro --packages para que spark-submit descargue la librería de Delta en tiempo de ejecución
 
 #Para CONSTRUIR la imagen:
 # la imagen se va a llamar spark-docker-app
