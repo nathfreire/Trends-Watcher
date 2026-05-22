@@ -18,8 +18,8 @@ Este repositorio contiene un pipeline de procesamiento de datos desarrollado en 
 
 
 
-///// FASE 2 ////
-# 🚀  Migración de Parquet a Delta Lake con Spark, Scala y Docker
+# ///// AVANCE 2 ////
+# 🚀  Conseguir que Spark, dentro del contenedor de Docker, genera Delta
 ---
 
 ## 🧠 Mapa de Batalla y Retos Técnicos
@@ -74,4 +74,47 @@ Pero si Docker detecta que ha cambiado algo en el Dockerfile no va a "aprovechar
     ```bash
     docker run --rm -v "${PWD}/../data:/app/data" -v "${PWD}/../output:/app/output" spark-docker-app:delta
     ```
+
+
+# ///// AVANCE 3 ////
+
+** Configurar DBT para que lea el Delta que generó Spark **
+## 🛠️ Bitácora de Desafíos, Lecciones Aprendidas y Soluciones
+
+### Guardar en Delta vs Consumo en Power BI
+* **Problema:** Se requería formato **Delta Lake** en la ingesta para asegurar transacciones ACID y evitar duplicados mediante `MERGE`. Sin embargo, Power BI local no lee carpetas Delta del disco de forma nativa sin configurar conectores complejos o infraestructura en la nube.
+* **Solución:** Se introdujo **DuckDB** como motor intermedio y **dbt** como orquestador de transformaciones. DuckDB actúa como un puente de alta velocidad: es capaz de leer las carpetas Delta de Spark y escribir el resultado procesado dentro de un archivo de base de datos relacional moderno (`.duckdb`), el cual sí es 100% compatible y ultra-rápido de leer desde Power BI.
+
+
+### 3. Error de Compilación en dbt: `unexpected '.' line 9`
+* **Problema:** Al ejecutar `dbt run`, el compilador de Jinja fallaba con un error sintáctico confuso apuntando a comentarios o puntos en el archivo `.sql` de staging.
+* **Solución:** Se identificó que Jinja es sumamente estricto con los caracteres invisibles de codificación (originados al mover texto entre Docker/Windows) y con puntos específicos en los comentarios de cabecera. Se limpió el archivo a código SQL minimalista eliminando metadatos corruptos de texto.
+
+### 4. Error de Extensión en dbt-duckdb: `Plugin delta not found` y `Table Function read_delta does not exist`
+* **Problema:** Al intentar leer los datos de Spark, dbt fallaba debido a que DuckDB no reconocía las funciones nativas para leer Delta Lake (`delta_scan` o `read_delta`), indicando que el plugin no estaba cargado en la sesión.
+* **Solución:** Intentar inyectar sentencias `INSTALL delta;` dentro del archivo SQL del modelo rompe el validador de dbt (que solo acepta sentencias `SELECT`). La solución robusta fue utilizar los ganchos de inicio globales (**`on-run-start`**) en el archivo `dbt_project.yml`:
+  
+```yaml
+  on-run-start:
+    - "INSTALL delta;"
+    - "LOAD delta;"
+```
+
+Esto garantiza que DuckDB inicialice el soporte para Delta Lake en su memoria antes de evaluar cualquier script SQL.
+
+### 5. Choque de Catálogo con sources.yml en Windows: Schema does not exist
+* **Problema:**  Al utilizar la sintaxis estándar profesional de dbt {{ source('delta_spark', 'trends') }}, dbt-duckdb intentaba buscar un esquema lógico interno en la base de datos en lugar de mapear la ruta física del disco en Windows, provocando fallos de catálogo.
+
+* **Solución:** Se migró la parametrización de rutas hacia el sistema de variables globales de dbt (vars). Al declarar la ruta en el dbt_project.yml, el código de staging quedó dinámico, limpio y totalmente funcional en Windows utilizando la función nativa de lectura:
+```SQL
+  SELECT * FROM delta_scan('{{ var("ruta_delta_bruto") }}')
+```
+
+### 6. Error de Columna Inexistente: Referenced column "updated_at" not found
+* **Problema:**: El modelo de staging fallaba porque buscaba la columna updated_at directamente en el origen de datos (Delta bruto) para usarla como metadato de fecha de extracción, pero dicha columna no existía en el CSV original.
+
+* **Solución:**  Se modificó la consulta para generar el metatato de auditoría en tiempo real directamente desde el motor de DuckDB utilizando la función de estampa temporal: now() AS extracted_at.
+
+Estado Actual del Proyecto
+Infraconstructura: Conectada y estable. dbt run ejecuta en verde (PASS) de manera consistente.
 
