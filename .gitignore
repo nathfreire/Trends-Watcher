@@ -221,3 +221,4 @@ data/*.parquet
 
 # 
 *.txt
+dbt_project/.user.yml
