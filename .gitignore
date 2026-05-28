@@ -215,7 +215,8 @@ __pycache__/
 data/*.csv
 data/*.parquet
 *.crc
-
+*.snappy.parquet
+*.json
 # VS Code
 .vscode/
 
