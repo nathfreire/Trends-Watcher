@@ -8,5 +8,6 @@
 SELECT 
     md5(repo_name) AS repo_id, -- Clave primaria que le digo que cree, baso en el nombre
     repo_name,
+    total_stars,
     repo_language
 FROM {{ ref('delta_silver') }} -- <--- dbt entiende que te refieres al sql silver que es el espejo del del bruto
