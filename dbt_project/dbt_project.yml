@@ -22,7 +22,7 @@ models:
       # porque dbt no es bueno para escribir delta sin un plugin
       +materialized: incremental
       +incremental_strategy: merge  # <-- ¡MERGE!
-      +unique_key: 'id_venta'       # La clave primaria para evitar duplicados
+      +unique_key: 'repo_name'       # La clave primaria para evitar duplicados
 
 vars:
   ruta_delta_bruto: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
