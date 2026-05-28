@@ -4,7 +4,7 @@ mi_db_profile:
   outputs:
     dev:
       type: duckdb
-      path: 'C:/010_/Trends-Watcher/mi_db_delta.duckdb' # Archivo local que creará DuckDB
+      path: 'mi_db_delta.duckdb' # Archivo local que creará DuckDB
       extensions:
         - parquet
         - httpfs
