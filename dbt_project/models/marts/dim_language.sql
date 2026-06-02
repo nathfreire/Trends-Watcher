@@ -12,6 +12,6 @@ WITH unique_languages AS (
 )
 
 SELECT 
-    ROW_NUMBER() OVER () AS id, -- Genera un PK secuencial sencillo (1, 2, 3...)
+    ROW_NUMBER() OVER () AS id_lang, -- Genera un PK secuencial sencillo (1, 2, 3...)
     repo_language
 FROM unique_languages
