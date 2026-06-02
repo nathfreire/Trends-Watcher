@@ -118,15 +118,13 @@ Esto garantiza que DuckDB inicialice el soporte para Delta Lake en su memoria an
 Estado Actual del Proyecto
 Infraconstructura: Conectada y estable. dbt run ejecuta en verde (PASS) de manera consistente.
 
-# 📊 Data Warehouse Local: Modelado Dimensional con dbt y DuckDB
-
-¡Bienvenido/a a este repositorio! Este proyecto está enfocado en el procesamiento, transformación y modelado dimensional (**tablas de hechos y dimensiones**) de una base de datos de repositorios, utilizando **dbt (Data Build Tool)** como capa de transformación y **DuckDB** como motor analítico local.
-
-Actualmente, el proyecto se encuentra en una fase crucial de arquitectura: **definir la estrategia de almacenamiento local y la conectividad óptima con Power BI** para la capa de visualización.
 
 ---
 
+# ///// AVANCE  ////
 ## 🛠️ El Dilema Arquitectónico: Almacenamiento y Conectividad
+
+Actualmente, el proyecto se encuentra en una fase crucial de arquitectura: **definir la estrategia de almacenamiento local y la conectividad óptima con Power BI** para la capa de visualización.
 
 Al trabajar en un entorno de desarrollo puramente local (en mi ordenador), se han identificado limitaciones con formatos de almacenamiento como **Delta Lake** (ya que DuckDB es excelente leyendo Delta, pero no está optimizado para escribir en este formato de forma nativa). 
 
