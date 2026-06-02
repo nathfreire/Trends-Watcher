@@ -118,3 +118,46 @@ Esto garantiza que DuckDB inicialice el soporte para Delta Lake en su memoria an
 Estado Actual del Proyecto
 Infraconstructura: Conectada y estable. dbt run ejecuta en verde (PASS) de manera consistente.
 
+# 📊 Data Warehouse Local: Modelado Dimensional con dbt y DuckDB
+
+¡Bienvenido/a a este repositorio! Este proyecto está enfocado en el procesamiento, transformación y modelado dimensional (**tablas de hechos y dimensiones**) de una base de datos de repositorios, utilizando **dbt (Data Build Tool)** como capa de transformación y **DuckDB** como motor analítico local.
+
+Actualmente, el proyecto se encuentra en una fase crucial de arquitectura: **definir la estrategia de almacenamiento local y la conectividad óptima con Power BI** para la capa de visualización.
+
+---
+
+## 🛠️ El Dilema Arquitectónico: Almacenamiento y Conectividad
+
+Al trabajar en un entorno de desarrollo puramente local (en mi ordenador), se han identificado limitaciones con formatos de almacenamiento como **Delta Lake** (ya que DuckDB es excelente leyendo Delta, pero no está optimizado para escribir en este formato de forma nativa). 
+
+Por lo tanto, el flujo de datos hacia Power BI se encuentra ante una bifurcación con **dos caminos posibles**:
+
+### 🗺️ Opción 1: Consumo Directo vía Archivos Parquet (Ruta Absoluta)
+Consiste en configurar el pipeline para que dbt exporte de manera externa las dimensiones y hechos en archivos planos con formato `.parquet` en un directorio local específico.
+* **Flujo:** `dbt` ➡️ Archivos `.parquet` locales ➡️ `Power BI` (Lectura directa apuntando a la ruta absoluta).
+* **Desventaja:** Implica una gestión externa de archivos y dependemos de rutas rígidas dentro del sistema operativo del ordenador.
+
+### 🔌 Opción 2: Almacenamiento Nativo e Integración por Conector DuckDB
+Consiste en mantener los datos procesados resguardados de forma centralizada dentro de la propia base de datos interna y binaria de DuckDB, instalando un conector específico para Power BI.
+* **Flujo:** `dbt` ➡️ Base de datos interna (`.db` / `.duckdb`) ➡️ `Power BI` (A través del conector de DuckDB).
+* **Configuración en dbt:** Requiere modificar el archivo de configuración `dbt_project.yml` (y las propiedades del modelo) para especificar que la materialización sea puramente interna (`materialized='table'`). De esta manera, el sistema no exporta hacia fuera (ni a Parquet ni a Delta).
+* **Ventaja Clave:** Al delegar el almacenamiento a la base de datos interna, DuckDB utiliza sus propios estándares de guardado de forma nativa. Esto garantiza mecanismos automáticos de **consistencia de datos, integridad y rendimiento analítico**, abstrayendo por completo la gestión manual de archivos en disco.
+
+---
+
+## 📊 Matriz Comparativa de Alternativas
+
+| Criterio | Opción 1: Archivos Parquet Externos | Opción 2: Base de Datos Interna DuckDB |
+| :--- | :--- | :--- |
+| **Ubicación de Datos** | Archivos independientes en el disco duro. | Dentro del archivo de base de datos de DuckDB. |
+| **Configuración dbt** | Requiere configuraciones de exportación física. | Configuración limpia en `dbt_project.yml` (`table`). |
+| **Consistencia** | Manual (Riesgo de desincronización de archivos). | **Nativa y Automática** (Gestionada por el motor). |
+| **Dependencia Power BI** | Ninguna (Conector Parquet integrado de fábrica). | Requiere instalar el conector de DuckDB en la máquina. |
+
+---
+
+## 🚀 Próximos Pasos y Plan de Acción
+
+1. **Testear el Conector:** Instalar el conector de DuckDB en Power BI local para evaluar su estabilidad y velocidad de respuesta.
+2. **Definir el `dbt_project.yml`:** Una vez seleccionado el camino, estructurar el archivo YAML para estandarizar las materializaciones del proyecto de forma definitiva.
+3. **Validación del Modelo:** Realizar cargas completas de los datos de los repositorios para certificar que las tablas de hechos (*facts*) y dimensiones se vinculen correctamente en el modelo estelar de Power BI.
