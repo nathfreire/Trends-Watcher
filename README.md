@@ -121,7 +121,7 @@ Infraconstructura: Conectada y estable. dbt run ejecuta en verde (PASS) de maner
 
 ---
 
-# ///// AVANCE  ////
+# ///// AVANCE 4  ////
 ## 🛠️ El Dilema Arquitectónico: Almacenamiento y Conectividad
 
 Actualmente, el proyecto se encuentra en una fase crucial de arquitectura: **definir la estrategia de almacenamiento local y la conectividad óptima con Power BI** para la capa de visualización.
