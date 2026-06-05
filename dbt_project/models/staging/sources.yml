@@ -1,4 +1,8 @@
 # Aquí es donde sí va la ruta de tu Delta bruto. 
+# Porque para tener una Capa Silver, hay que tener una fuente,
+#y Esa fuente es a la que apunta el .sql de models/staing/delta_silver.sql
+#que va a crear la View o Espejo FIEL de los datos Bronce generados
+# por spark
 #Le dices a dbt: "Oye, usando el motor que configuré en el profile (DuckDB), 
 # ve a buscar datos externos a esta carpeta de Spark".
 #Es decir, estás registrando el "Delta Bruto" como Fuente (Sources)
@@ -12,7 +16,7 @@ sources:
   - name: delta_spark
     meta:
       plugin: delta
-    description: "Datos crudos de la API de GitHub generados por Spark en formato Delta"
+    description: "Datos transformados y generados por Spark en formato Delta"
     tables:
       - name: trends
         external_location: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
