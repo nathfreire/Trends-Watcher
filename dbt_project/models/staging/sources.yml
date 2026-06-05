@@ -19,4 +19,4 @@ sources:
     description: "Datos transformados y generados por Spark en formato Delta"
     tables:
       - name: trends
-        external_location: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
+        external_location: "{{ var('ruta_delta_bruto') }}"  # Jinja 
