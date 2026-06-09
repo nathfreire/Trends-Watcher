@@ -1,7 +1,8 @@
 -- models/dim_time.sql
 
 {{ config(
-    materialized='table'
+    materialized='incremental',
+    unique_key='id_tiempo'
 ) }}
 
 WITH date_series AS (
