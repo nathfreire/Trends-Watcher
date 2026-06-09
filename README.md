@@ -162,7 +162,7 @@ Consiste en mantener los datos procesados resguardados de forma centralizada den
 
 # //// AVANCE 5 ////
 
-### 5. Choque de Catálogo con `sources.yml` en Entornos Sin Metastore (DuckDB)
+### Choque de Catálogo con `sources.yml` en Entornos Sin Metastore (DuckDB)
 
 * **Problema:** Al utilizar la sintaxis estándar y recomendada de dbt `{{ source('bronze', 'delta_bruto') }}`, la compilación fallaba en el modelo de staging (`delta_silver.sql`), es decir cuando este `.sql` aplica ese source(), llama a su fuente source.yml y salta con un error de plugin o de tabla inexistente. 
  :
@@ -188,7 +188,7 @@ Consiste en mantener los datos procesados resguardados de forma centralizada den
 
 
     **Resultado en la arquitectura:** 
-    Al quitar source(), el .sql de staging sólo se queda escuchando a `dbt_project.yml` y deja de escuchar a `sources.yml`.  Y aunque la source.yml debería ser el único archivo donde se declara la fuente, ya vimos que saltaba el error, por lo que al no usar source() y por ende, ya no escuchar a `sources.yml`, éste deja de ser el inyector del origen de datos y pasa a cumplir un rol estrictamente de **documentación y gobernanza del linaje del proyecto**.
+    Al quitar `{{ source('bronze', 'delta_bruto') }} , el `.sql` de staging sólo se queda escuchando a `dbt_project.yml` y deja de escuchar a `sources.yml`.  Y aunque la source.yml debería ser el único archivo donde se declara la fuente, ya vimos que saltaba error, por lo que al no usar source() y por ende, ya no escuchar a `sources.yml`, éste deja de ser el inyector del origen de datos, ahora sólo se escucha a`dbt_project.yml`, y pasa a cumplir un rol estrictamente de **documentación y gobernanza del linaje del proyecto** por lo que la arquitectura no resulta redundante.
 
     Tras aplicar este cambio, el pipeline compila y ejecuta en verde todos los modelos (incluyendo dimensiones y hechos) de forma exitosa:
 
@@ -207,46 +207,3 @@ Consiste en mantener los datos procesados resguardados de forma centralizada den
     12:07:51  Finished running 4 external models, 2 project hooks, 1 view model in 2.78 seconds.
     12:07:52  Completed successfully (PASS=7 TOTAL=7)
 
-
-
-
-
-
-
-Concluyo en que tuve que establecer conjuntamente la variable de entorno (apuntando a la ruta absoluta del Delta Bruto) en dbt_project.yml y la source.yml pero el .sql de staging sólo va a poder escuchar a dbt_project.yml. Podría parecer redudante porque la source.yml debería ser el único archivo donde se declara la fuente, pero para que el .sql de staging (elque crea la view espejo) la use debe aplicar source() pero con ésta salta un error. Muestro el error:
-11:23:05  Finished running 4 external models, 2 project hooks, 1 view model in 0 hours 0 minutes and 0.31 seconds (0.31s).
-11:23:05  
-11:23:05  Completed with 1 error, 0 partial successes, and 0 warnings:
-11:23:05  
-11:23:05  Failure in model delta_silver (models\staging\delta_silver.sql)
-11:23:05    Compilation Error in model delta_silver (models\staging\delta_silver.sql)
-  Plugin delta not found; known plugins are: 
-11:23:05  
-11:23:05  Done. PASS=2 WARN=0 ERROR=1 SKIP=4 NO-OP=0 TOTAL=7
-
-Este error es una limitación conocida del stack ficheros-sin-metastore como DuckDB
-Explicación: Con dbt-duckdb el macro {{ source('bronze', 'delta_bruto') }} sobre una tabla external con formato delta puede no traducirse a delta_scan() automáticamente según la versión del adaptador.
-{{ source('bronze', 'delta_bruto') }}  →  dbt genera:  SELECT * FROM main.delta_bruto 
-DuckDB busca esta tabla en su catálogo pero NO existe, es un fichero externo que requiere delta_scan() explícito.
-Por eso tengo que usar delta_scan() y no source() y si no uso source() el .sql deja de escuchar a source.yml y ésta ya no es fuente, sólo documentación. Muestro el logl del terminal:
-12:07:51  1 of 2 START hook: proyecto_dbt.on-run-start.0 ................................. [RUN]
-12:07:51  1 of 2 OK hook: proyecto_dbt.on-run-start.0 .................................... [OK in 0.02s]
-12:07:51  2 of 2 START hook: proyecto_dbt.on-run-start.1 ................................. [RUN]
-12:07:51  2 of 2 OK hook: proyecto_dbt.on-run-start.1 .................................... [OK in 0.01s]
-12:07:51  
-12:07:51  1 of 5 START sql view model main.delta_silver .................................. [RUN]
-12:07:51  1 of 5 OK created sql view model main.delta_silver ............................. [OK in 0.15s]
-12:07:51  2 of 5 START sql external model main.dim_language .............................. [RUN]
-12:07:51  2 of 5 OK created sql external model main.dim_language ......................... [OK in 0.19s]
-12:07:51  3 of 5 START sql external model main.dim_repositorios .......................... [RUN]
-12:07:51  3 of 5 OK created sql external model main.dim_repositorios ..................... [OK in 0.19s]
-12:07:51  4 of 5 START sql external model main.dim_tiempo ................................ [RUN]
-12:07:51  4 of 5 OK created sql external model main.dim_tiempo ........................... [OK in 0.10s]
-12:07:51  5 of 5 START sql external model main.facts ..................................... [RUN]
-12:07:51  5 of 5 OK created sql external model main.facts ................................ [OK in 0.11s]
-12:07:51  
-12:07:51  Finished running 4 external models, 2 project hooks, 1 view model in 0 hours 0 minutes and 2.78 seconds (2.78s).
-12:07:52  
-12:07:52  Completed successfully
-12:07:52  
-12:07:52  Done. PASS=7 WARN=0 ERROR=0 SKIP=0 NO-OP=0 TOTAL=7
