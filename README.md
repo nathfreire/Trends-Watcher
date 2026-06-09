@@ -276,3 +276,4 @@ Si realizaste una conexión errónea inicial apuntando a `Memory`, Power BI podr
 2. Asegúrate de limpiar la casilla `Memory` en el panel de control ODBC.
 3. Vuelve a mapear la ruta absoluta e intenta la importación de nuevo.
 
+¡AParece aquñi la foto?
