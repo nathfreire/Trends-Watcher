@@ -1,7 +1,8 @@
 -- models/facts.sql
 
 {{ config(
-    materialized='table'
+    materialized='incremental',
+    incremental_strategy='append'
 ) }}
 
 SELECT
