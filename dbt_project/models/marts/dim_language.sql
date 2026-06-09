@@ -1,7 +1,8 @@
 -- models/dim_language.sql
 
 {{ config(
-    materialized='table'
+    materialized='incremental',
+    unique_key='repo_language'
 ) }}
 
 WITH unique_languages AS (
