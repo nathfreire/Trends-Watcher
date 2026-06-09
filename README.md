@@ -188,7 +188,7 @@ Consiste en mantener los datos procesados resguardados de forma centralizada den
 
 
     **Resultado en la arquitectura:** 
-    Al quitar `{{ source('bronze', 'delta_bruto') }} , el `.sql` de staging sólo se queda escuchando a `dbt_project.yml` y deja de escuchar a `sources.yml`.  Y aunque la source.yml debería ser el único archivo donde se declara la fuente, ya vimos que saltaba error, por lo que al no usar source() y por ende, ya no escuchar a `sources.yml`, éste deja de ser el inyector del origen de datos, ahora sólo se escucha a`dbt_project.yml`, y pasa a cumplir un rol estrictamente de **documentación y gobernanza del linaje del proyecto** por lo que la arquitectura no resulta redundante.
+    Al quitar `{{ source('bronze', 'delta_bruto') }} `, el `.sql` de staging sólo se queda escuchando a `dbt_project.yml` y deja de escuchar a `sources.yml`.  Y aunque la source.yml debería ser el único archivo donde se declara la fuente, ya vimos que saltaba error, por lo que al no usar source() y por ende, ya no escuchar a `sources.yml`, éste deja de ser el inyector del origen de datos (ahora sólo se escucha a`dbt_project.yml`) y pasa a cumplir un rol estrictamente de **documentación y gobernanza del linaje del proyecto** por lo que la arquitectura no resulta redundante.
 
     Tras aplicar este cambio, el pipeline compila y ejecuta en verde todos los modelos (incluyendo dimensiones y hechos) de forma exitosa:
 
