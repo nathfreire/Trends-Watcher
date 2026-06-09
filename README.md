@@ -216,7 +216,7 @@ Este repositorio contiene la configuración y los pasos necesarios para migrar u
  
 ---
  
-## 🛡️ Arquitectura del Proyecto
+## 🛡️ objetivo
  
 El objetivo principal es eliminar la persistencia en archivos Parquet independientes y consolidar el modelo de datos (Hechos y Dimensiones) dentro de la memoria interna/archivo persistente de DuckDB. Esto permite que Power BI actúe contra DuckDB como si fuera un catálogo estructurado.
  
