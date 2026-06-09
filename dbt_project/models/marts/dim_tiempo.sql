@@ -1,8 +1,7 @@
 -- models/dim_time.sql
 
 {{ config(
-    materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/dim_tiempo.parquet'
+    materialized='table'
 ) }}
 
 WITH date_series AS (

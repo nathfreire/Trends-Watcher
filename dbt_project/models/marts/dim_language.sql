@@ -1,8 +1,7 @@
 -- models/dim_language.sql
 
 {{ config(
-    materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/dim_language.parquet'
+    materialized='table'
 ) }}
 
 WITH unique_languages AS (

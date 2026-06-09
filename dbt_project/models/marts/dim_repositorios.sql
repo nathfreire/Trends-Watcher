@@ -1,8 +1,7 @@
 -- models/dim_repositorios.sql
 
 {{ config(
-    materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/dim_repositorios.parquet'
+    materialized='table'
 ) }}
 
 SELECT 

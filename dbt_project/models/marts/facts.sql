@@ -1,8 +1,7 @@
 -- models/facts.sql
 
 {{ config(
-    materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/facts.parquet'
+    materialized='table'
 ) }}
 
 SELECT
