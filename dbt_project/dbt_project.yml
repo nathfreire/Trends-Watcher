@@ -28,5 +28,8 @@ models:
 
 vars:
   ruta_delta_bruto: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
-## Esta variable de entorno se ha declarado aquí pero apunta a la ruta que
-## source.yml también apunta como fuente
+## Esta variable de entorno se ha declarado aquí pero aparece en
+## source.yml (aquí en teoria debería shaber sido como fuente pero, sólo va a ser como documentación
+### porque el scrip .sql que crea la view espejo sólo puede escuchar con delta_scan() , y no source() porque si uso esto
+### no corre, a dbt_project.yml debido a 
+### impedimento técnido de Duckdb)
