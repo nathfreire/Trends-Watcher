@@ -1,8 +1,6 @@
 -- models/dim_repositorios.sql
 
-{{ config(
-    materialized='table'
-) }}
+{{ config(materialized='incremental', unique_key='repo_name') }}
 
 SELECT 
     md5(repo_name) AS id_repo, -- Clave primaria que le digo que cree, baso en el nombre
