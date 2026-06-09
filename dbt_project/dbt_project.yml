@@ -24,7 +24,6 @@ models:
       # atomicidad y rollback también, y de forma nativa
       +materialized: incremental
       +incremental_strategy: merge  # <-- ¡MERGE!
-      +unique_key: 'repo_name'       # La clave primaria para evitar duplicados
 
 vars:
   ruta_delta_bruto: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"
