@@ -207,3 +207,72 @@ Consiste en mantener los datos procesados resguardados de forma centralizada den
     12:07:51  Finished running 4 external models, 2 project hooks, 1 view model in 2.78 seconds.
     12:07:52  Completed successfully (PASS=7 TOTAL=7)
 
+
+
+# //// AVANCE 6 ///
+# Conexión Incremental de DBT con DuckDB y Power BI a través de ODBC
+ 
+Este repositorio contiene la configuración y los pasos necesarios para migrar un flujo de datos analítico desde un almacenamiento basado en archivos `.parquet` sueltos hacia una base de datos local gestionada con **DuckDB**, orquestada por **DBT (Data Build Tool)** y consumida directamente desde **Power BI** utilizando un controlador **ODBC**.
+ 
+---
+ 
+## 🛡️ Arquitectura del Proyecto
+ 
+El objetivo principal es eliminar la persistencia en archivos Parquet independientes y consolidar el modelo de datos (Hechos y Dimensiones) dentro de la memoria interna/archivo persistente de DuckDB. Esto permite que Power BI actúe contra DuckDB como si fuera un catálogo estructurado.
+ 
+## ⚙️ 1. Configuración de DBT
+ 
+### Modificaciones en `dbt_project.yml`
+ 
+Se eliminó la configuración genérica y global de la propiedad `unique_key` y la estrategia de `merge` masiva que se aplicaba de forma uniforme en todo el proyecto. Esto se hizo para evitar colisiones de claves primarias ("mezclar peras con manzanas") entre tablas con naturalezas distintas (por ejemplo, `tiempo` vs `lenguaje`).
+ 
+Las materializaciones se movieron al nivel de cada archivo `.sql` individual.
+ 
+### Configuración por Modelo (`.sql`)
+ 
+Cada archivo de dimensión y hecho debe configurarse de forma independiente para asegurar su persistencia en DuckDB de manera incremental y con su respectiva clave única:
+ 
+```sql
+{{ config(
+    materialized='incremental',
+    unique_key='id_propio_de_la_tabla'
+) }}
+```
+ 
+## 🔌 2. Configuración del Driver ODBC (DuckDB)
+ 
+Para conectar Power BI con DuckDB se requiere instalar y configurar el driver ODBC oficial de DuckDB.
+ 
+### Pasos de Configuración en el Administrador de Orígenes de Datos ODBC:
+ 
+1. Crear un nuevo DSN de Sistema o de Usuario seleccionando el driver de DuckDB.
+2. Nombre de la conexión (DSN): `mi_db`
+> ⚠️ **¡CRÍTICO! Solución de Errores de Ruta:**
+>
+> Por defecto, el driver viene configurado con la palabra `Memory` en la casilla de la base de datos.
+> - Debes **desmarcar o borrar por completo** el texto `Memory`. No añadas la ruta a continuación de esa palabra.
+> - Introduce la **ruta absoluta completa** hacia tu archivo de base de datos local de DuckDB (ej. `C:\\usuarios\\tu_usuario\\proyecto\\mi_base_de_datos.db`).
+> - Guarda y acepta los cambios.
+ 
+> 💡 **Nota de solución de problemas:** Si se deja la opción `Memory`, Power BI intentará buscar una base de datos efímera y vacía en memoria, lo que provocará que las tablas aparezcan en blanco o que la conexión falle de forma persistente debido al almacenamiento en caché de Power BI.
+ 
+## 📊 3. Conexión en Power BI
+ 
+Una vez que el puente ODBC está correctamente configurado apuntando a la ruta absoluta, sigue estos pasos en Power BI Desktop:
+ 
+1. Ve a **Obtener datos** -> **Otros** -> **ODBC**.
+2. Selecciona en el desplegable el nombre del DSN configurado: `mi_db`.
+3. Cuando Power BI solicite las credenciales de acceso:
+   - **Usuario:** `mi_db` *(Introduce el mismo nombre otorgado a la conexión DSN)*.
+   - **Contraseña:** Déjala completamente en blanco *(al tratarse de un entorno local de DuckDB, no requiere contraseña)*.
+4. Conecta y selecciona las tablas del catálogo de DuckDB para comenzar a modelar.
+
+
+## 🔄 Solución de Problemas (Cache & Reinstalación)
+ 
+Si realizaste una conexión errónea inicial apuntando a `Memory`, Power BI podría haber cacheado esa ruta vacía. Si no se actualizan los datos tras corregir el DSN:
+ 
+1. Elimina el driver u origen de datos guardado en las configuraciones de Power BI (**Archivo > Opciones y configuración > Configuración de origen de datos**).
+2. Asegúrate de limpiar la casilla `Memory` en el panel de control ODBC.
+3. Vuelve a mapear la ruta absoluta e intenta la importación de nuevo.
+
