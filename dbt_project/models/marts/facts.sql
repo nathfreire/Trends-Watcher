@@ -2,7 +2,8 @@
 
 {{ config(
     materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/facts.parquet'
+    location='C:/010_/Trends-Watcher/output/gold/facts.parquet',
+    
 
     incremental_strategy='append'
 ) }}
