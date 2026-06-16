@@ -2,7 +2,10 @@
 
 {{ config(
     materialized='external',
-    location='C:/010_/Trends-Watcher/output/gold/dim_tiempo.parquet'
+    location='C:/010_/Trends-Watcher/output/gold/dim_tiempo.parquet',
+
+    unique_key='id_tiempo',
+    incremental_strategy='delete+insert'
 ) }}
 
 WITH date_series AS (

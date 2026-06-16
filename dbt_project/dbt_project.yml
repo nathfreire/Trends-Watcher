@@ -19,12 +19,10 @@ models:
     # Todo lo que esté en marts se guardará como TABLAS físicas
     marts:
       # Tuve que poner formato tabla/incremental para que dbt gestione los duplicados
-      # porque dbt no es bueno para escribir delta sin un plugin,
-      # Pero aunque no sea Delta, dbt  puede asegurar consistencia
+      # dbt  puede asegurar consistencia
       # atomicidad y rollback también, y de forma nativa
       +materialized: incremental
       +incremental_strategy: merge  # <-- ¡MERGE!
-      +unique_key: 'repo_name'       # La clave primaria para evitar duplicados
 
 vars:
   ruta_delta_bruto: "C:/010_/Trends-Watcher/output/bronze/delta_bruto"

@@ -3,11 +3,13 @@
 {{ config(
     materialized='external',
     location='C:/010_/Trends-Watcher/output/gold/facts.parquet'
+
+    incremental_strategy='append'
 ) }}
 
 SELECT
     -- 1. Dimensión Repositorio: Usamos MD5 (Pasa directo de silver)
-    md5(silver.repo_name) AS id_repositorio, 
+    md5(silver.repo_name) AS id_repo, 
     
     -- 2. Dimensión Tiempo: Formato YYYYMMDD (Se calcula directo de la fecha)
     CAST(strftime('%Y%m%d', CAST(silver.extracted_at AS DATE)) AS INTEGER) AS id_tiempo,
