@@ -280,3 +280,94 @@ Si realizaste una conexión errónea inicial apuntando a `Memory`, Power BI podr
 Reusltado:
 <img width="1660" height="983" alt="odbc_conectada03" src="https://github.com/user-attachments/assets/97ecce41-c1eb-4b4b-888f-c48e81c25ded" />
 
+Problema futuro que dio más tarde:
+No puedo acceder a la base de datos de duckdb con Power BI mientras hay otro acceso abierto, aunque sea el propio Power Bi quien está accediendo.
+
+# //// AVANCE 7 ///
+
+## 🎯 Solucionar falta de Concurrencia
+
+![PowerBi](img/powerbi_error.jpg)
+
+En esta fase se abordó la problemática de la falta de concurrencia al conectar **Power BI** con la memoria interna de **DuckDB** mediante el driver ODBC. Para resolverlo, se migró la arquitectura hacia un almacenamiento desacoplado basado en archivos **Parquet particionados** (Capa Gold), implementando una lógica de carga incremental combinada e integrando los datos en Power BI de forma dinámica y escalable mediante un **Script Maestro en Lenguaje M**.
+
+---
+
+## 🏗️ Mapa de Flujo y Arquitectura de Datos
+
+El siguiente diagrama ilustra la transición desde el almacenamiento aislado e inflexible en memoria, el merge de ramas de desarrollo, hasta la ingesta optimizada en Power BI mediante consultas maestras referenciadas.
+
+```mermaid
+graph TD
+    A[Modelos en Memoria DuckDB] -->|Problema: Bloqueo ODBC / Sin Concurrencia| B{Punto de Decisión}
+    
+    subgraph "Estrategia de Ramas Git"
+    C[Rama: duck_ODBC / Memoria Interna] -->|Git Merge| E[Nueva Rama Actual]
+    D[Rama: parquet sueltos] -->|Git Merge| E
+    end
+    
+    B -->|Solución| E
+    
+    subgraph "Procesamiento e Ingesta Incremental"
+    E --> F[Capa Gold: Archivos .parquet]
+    F --> G{Tipo de Tabla}
+    G -->|Hechos: facts| H[Estrategia: Append]
+    G -->|Dimensiones: tiempo, repositorios, language| I[Estrategia: Merge Incremental]
+    I -->|Limitación DuckDB: No exporta + incremental simultáneamente| J[Solución: Parámetro Delete + Insert]
+    end
+
+    subgraph "Capa de Visualización (Power BI)"
+    H --> K[Carpeta Gold]
+    J --> K
+    K -->|Origen de Datos: Folder| L[Consulta Maestra en Lenguaje M]
+    L --> M[Filtro por Dimensión / Hecho]
+    M --> N[Operación: Expandir Columna de Tablas]
+    N --> O[Cinco Tablas Listas]
+    end
+
+    style B fill:#ff9999,stroke:#333,stroke-width:2px
+    style E fill:#99ccff,stroke:#333,stroke-width:2px
+    style L fill:#ffe6cc,stroke:#333,stroke-width:2px
+    style O fill:#ccffcc,stroke:#333,stroke-width:2px
+
+````
+Yo he tomado esta decisión de arquitectura, porque mi proyecto lo permite (no tengo cientos de dimesiones)
+
+## 🗺️ ¿Qué sucede si fueran miles de parquets?
+
+🛠️ Los 3 Caminos para la Ingesta Masiva
+Cuando la estrategia de "Consulta Maestra + Referencias Manuales" en Power Query se vuelve inviable debido al volumen de archivos, he valorado tres enfoques decisiones de arquitectura se tomaria en ese caso para automatizar y optimizar el pipeline:
+
+El siguiente diagrama ayuda a identificar qué camino tomar dependiendo de la infraestructura disponible, las licencias y el stack tecnológico de la organización:
+
+```mermaid
+graph TD
+    A[Volumen Crítico: +1000 Archivos Parquet/CSV] --> B{¿Qué herramientas o licencias posees?}
+    
+    B -->|Opción 1: Desarrollo Local Avanzado| C[External Tools + Script C# / Tabular Editor]
+    B -->|Opción 2: Ecosistema Cloud Microsoft| D[Power BI Dataflows]
+    B -->|Opción 3: Arquitectura Enterprise Dataplatform| E[Modern Data Warehouse: Snowflake / Databricks]
+
+    subgraph "1. Automatización con C#"
+    C --> C1[Automatiza la creación de Tablas y Particiones]
+    C1 --> C2[Evita la degradación de interfaz de Power Query]
+    end
+
+    subgraph "2. Procesamiento Desacoplado"
+    D --> D1[Carga y transformación en la nube]
+    D1 --> D2[El reporte final solo consume entidades optimizadas]
+    end
+
+    subgraph "3. Cómputo Distribuido"
+    E --> E1[Ingesta automática y manejo de metadatos]
+    E1 --> E2[Creación dinámica de Tablas de Hechos y Dimensiones]
+    E2 --> E3[Power BI se conecta por DirectQuery / Import de una única fuente limpia]
+    end
+
+    style A fill:#ffcccc,stroke:#333,stroke-width:2px
+    style C fill:#d5f5e3,stroke:#333
+    style D fill:#fcf3cf,stroke:#333
+    style E fill:#d6eaf8,stroke:#333
+    
+```
+*(Nota: En el código de External Tools se utiliza técnicamente **C#** en lugar de C puro, ya que es el lenguaje nativo que aceptan las herramientas del ecosistema de Power BI como Tabular Editor o DAX Studio para manipular el modelo tabular).*
