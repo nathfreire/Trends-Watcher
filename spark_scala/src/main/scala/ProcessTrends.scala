@@ -97,6 +97,7 @@ object ProcessTrends {
       dfClean.write
         .format("delta")
         .mode("overwrite")
+        .option("overwriteSchema", "true") // Le dice a Delta que redefina el schema
         .save(outputPath)
 
       println("🆕 Tabla Delta original no encontrada. Se ha creado y cargado por primera vez Delta.")
