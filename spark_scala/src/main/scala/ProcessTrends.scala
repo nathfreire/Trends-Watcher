@@ -5,7 +5,7 @@
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.types._
 import io.delta.tables._ // Importamos las librerías de Delta Lake
 
 object ProcessTrends {
@@ -30,13 +30,48 @@ object ProcessTrends {
       .option("inferSchema", "true")
       .csv(inputPath)
 
-    // 2. Limpieza y Transformación
-    val dfClean = df
-      .withColumn("stars", col("stars").cast(IntegerType))
-      .filter(col("stars").isNotNull)
-      .select("name", "stars", "language")
+    // 2. Aseguro tipado correcto
+    val dfTyped = df
+      .withColumn("id", col("id").cast(LongType))                 // Los IDs de GitHub pueden ser muy grandes
+      .withColumn("name", col("name").cast(StringType))
+      .withColumn("owner_login", col("owner_login").cast(StringType))
+      .withColumn("description", col("description").cast(StringType))
+      
+      // Parseo de fechas (ISO 8601 string a Timestamp)
+      .withColumn("created_at", to_timestamp(col("created_at"), "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+      .withColumn("updated_at", to_timestamp(col("updated_at"), "yyyy-MM-dd'T'HH:mm:ss'Z'"))
+      
+      // Métricas numéricas e indicadores de tamaño
+      .withColumn("size", col("size").cast(LongType))
+      .withColumn("stargazers_count", col("stargazers_count").cast(IntegerType))
+      .withColumn("watchers_count", col("watchers_count").cast(IntegerType))
+      .withColumn("forks_count", col("forks_count").cast(IntegerType))
+      .withColumn("open_issues_count", col("open_issues_count").cast(IntegerType))
+      
+      // Texto y metadatos
+      .withColumn("language", col("language").cast(StringType))
+      .withColumn("license_name", col("license_name").cast(StringType))
+      .withColumn("topics", col("topics").cast(StringType))
+    
 
-    // 3. Escritura (Ruta de salida que mapearemos a tu Windows)
+    // 3. Aplicamos la limpieza básica de registros correlativos
+    val dfClean = dfTyped
+    // Regla crítica: Un repositorio sin ID o sin Nombre es basura o un registro corrupto
+      .filter(col("id").isNotNull && col("name").isNotNull)
+      
+      // Limpieza de texto: Si la descripción viene vacía ("") la transformamos en un NULL real
+      .withColumn("description", when(trim(col("description")) === "", null).otherwise(col("description")))
+      
+      // Limpieza de nulos por defecto en métricas (evitamos problemas al sumar o promediar en dbt)
+      .withColumn("stargazers_count", coalesce(col("stargazers_count"), lit(0)))
+      .withColumn("watchers_count", coalesce(col("watchers_count"), lit(0)))
+      .withColumn("forks_count", coalesce(col("forks_count"), lit(0)))
+      .withColumn("open_issues_count", coalesce(col("open_issues_count"), lit(0)))  
+  
+
+    println(s"-> Tipado, limpieza en Spark")
+
+    // 4. Escritura (Ruta de salida que mapearemos a tu Windows)
     // en Delta con MERGE
     val outputPath = "/app/output/bronze/delta_bruto"
 
