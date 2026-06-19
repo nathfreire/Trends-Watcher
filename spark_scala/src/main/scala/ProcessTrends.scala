@@ -81,11 +81,11 @@ object ProcessTrends {
     if (DeltaTable.isDeltaTable(spark, outputPath)) {
       val deltaTable = DeltaTable.forPath(spark, outputPath)
 
-      // Ejecutamos el MERGE usando 'name' como clave de negocio
+      // Ejecutamos el MERGE usando 'id' como clave de negocio
       deltaTable.as("target")
         .merge(
           dfClean.as("updates"),
-          "target.name = updates.name"
+          "target.id = updates.id"
         )
         .whenMatched().updateAll() // Si el repo ya existe, actualiza sus estrellas/idioma
         .whenNotMatched().insertAll() // Si es nuevo, lo inserta
