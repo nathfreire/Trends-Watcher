@@ -24,6 +24,7 @@ CMD ["spark-submit", "--class", "ProcessTrends", "--packages", "io.delta:delta-s
 # se ha agregado el parámetro --packages para que spark-submit descargue la librería de Delta en tiempo de ejecución
 
 #Para CONSTRUIR la imagen:
+# Abre primero Docker Desktop para que se encienda 
 # la imagen se va a llamar spark-docker-app
 # (.venv) PS C:\010_\Trends-Watcher\spark_scala> docker build -t spark-docker-app .  
 
