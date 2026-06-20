@@ -81,7 +81,7 @@ object ProcessTrends {
     if (DeltaTable.isDeltaTable(spark, outputPath)) {
       val deltaTable = DeltaTable.forPath(spark, outputPath)
 
-      // Ejecutamos el MERGE usando 'id' como clave de negocio
+      // Ejecutamos el MERGE usando 'id', no "name" como clave de negocio
       deltaTable.as("target")
         .merge(
           dfClean.as("updates"),
